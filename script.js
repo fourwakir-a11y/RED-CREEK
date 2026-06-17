@@ -1,9 +1,12 @@
 // =====================================
-// RED CREEK FPS CORE V3 + WORLD V3
-// CLEAN ENGINE BASE
+// RED CREEK FPS V3 - GUN SYSTEM UPGRADE
+// (WORKS WITH YOUR CURRENT FPS CORE V3)
 // =====================================
 
 let scene, camera, renderer;
+
+let worldObjects = [];
+let enemies = [];
 
 const keys = {};
 
@@ -11,7 +14,7 @@ let yaw = 0;
 let pitch = 0;
 
 // ==========================
-// PLAYER (CLEAN FPS CORE)
+// PLAYER
 // ==========================
 
 const player = {
@@ -27,14 +30,33 @@ const player = {
     canJump: false
 };
 
-// world collision objects
-let colliders = [];
+// ==========================
+// GUN V3
+// ==========================
+
+const gun = {
+    ammo: 30,
+    maxAmmo: 30,
+
+    reserveAmmo: 90,
+
+    fireRate: 6,        // frames between shots
+    fireCooldown: 0,
+
+    reloadTime: 90,
+    reloadTimer: 0,
+
+    reloading: false,
+
+    recoil: 0
+};
 
 // ==========================
 // START
 // ==========================
 
 window.addEventListener("load", () => {
+
     document.getElementById("startBtn")
         .addEventListener("click", startGame);
 });
@@ -51,13 +73,12 @@ function startGame() {
 }
 
 // ==========================
-// INIT ENGINE
+// INIT (USES YOUR FPS CORE V3 WORLD)
 // ==========================
 
 function init() {
 
     scene = new THREE.Scene();
-
     scene.background = new THREE.Color(0x87b5ff);
     scene.fog = new THREE.FogExp2(0x87b5ff, 0.010);
 
@@ -77,153 +98,74 @@ function init() {
     createLights();
     createGround();
     createWorldV3();
+    spawnEnemies();
 
     setupInput();
+    createCrosshair();
+    updateAmmoUI();
 }
 
 // ==========================
-// LIGHTING
+// LIGHTS
 // ==========================
 
 function createLights() {
-
     scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-    const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+    const sun = new THREE.DirectionalLight(0xffffff, 1.4);
     sun.position.set(100, 150, 50);
     scene.add(sun);
 }
 
 // ==========================
-// GROUND (BIGGER SCALE)
+// GROUND
 // ==========================
 
 function createGround() {
-
     const ground = new THREE.Mesh(
         new THREE.PlaneGeometry(2000, 2000),
         new THREE.MeshStandardMaterial({ color: 0x2f8a3a })
     );
 
     ground.rotation.x = -Math.PI / 2;
-
     scene.add(ground);
 }
 
 // ==========================
-// WORLD V3 (REAL MAP STRUCTURE)
+// CROSSHAIR
 // ==========================
 
-function box(x,y,z,w,h,d,color){
+function createCrosshair() {
 
-    const m = new THREE.Mesh(
-        new THREE.BoxGeometry(w,h,d),
-        new THREE.MeshStandardMaterial({ color })
-    );
+    const cross = document.createElement("div");
+    cross.id = "crosshair";
+    cross.innerHTML = "+";
 
-    m.position.set(x, y + h/2, z);
+    cross.style.position = "absolute";
+    cross.style.left = "50%";
+    cross.style.top = "50%";
+    cross.style.transform = "translate(-50%, -50%)";
+    cross.style.color = "white";
+    cross.style.fontSize = "24px";
+    cross.style.userSelect = "none";
 
-    scene.add(m);
-
-    colliders.push(m);
-
-    return m;
-}
-
-function createWorldV3() {
-
-    // =========================
-    // 🏙 TOWN CENTER
-    // =========================
-
-    for(let x = -3; x <= 3; x++){
-        for(let z = -2; z <= 2; z++){
-
-            let height = 6 + Math.random() * 18;
-
-            box(
-                x * 35,
-                0,
-                z * 35,
-                18,
-                height,
-                18,
-                0x5a5a5a
-            );
-        }
-    }
-
-    // main road
-    const road = new THREE.Mesh(
-        new THREE.PlaneGeometry(300, 40),
-        new THREE.MeshStandardMaterial({ color: 0x2b2b2b })
-    );
-
-    road.rotation.x = -Math.PI / 2;
-    road.position.y = 0.01;
-    scene.add(road);
-
-    // =========================
-    // 🌲 FOREST ZONE
-    // =========================
-
-    for(let i = 0; i < 80; i++){
-
-        const x = -300 + Math.random() * 600;
-        const z = -300 - Math.random() * 500;
-
-        const trunk = box(x,0,z,2,8,2,0x4b2e16);
-
-        const leaves = new THREE.Mesh(
-            new THREE.SphereGeometry(5, 6, 6),
-            new THREE.MeshStandardMaterial({ color: 0x1f6b2a })
-        );
-
-        leaves.position.set(x, 10, z);
-
-        scene.add(leaves);
-    }
-
-    // =========================
-    // 🏭 INDUSTRIAL ZONE
-    // =========================
-
-    for(let i = 0; i < 10; i++){
-
-        box(
-            -400 + i * 40,
-            0,
-            200,
-            30,
-            20 + Math.random() * 10,
-            30,
-            0x3d3d3d
-        );
-    }
-
-    // containers / cover
-    for(let i = 0; i < 15; i++){
-
-        box(
-            -450 + Math.random() * 300,
-            0,
-            260 + Math.random() * 100,
-            6,
-            6,
-            12,
-            0x8a2c2c
-        );
-    }
+    document.body.appendChild(cross);
 }
 
 // ==========================
-// INPUT (FPS CORE FIXED)
+// INPUT
 // ==========================
 
 function setupInput() {
 
     document.addEventListener("keydown", e => {
+
         keys[e.key.toLowerCase()] = true;
+
+        // reload
+        if (e.key.toLowerCase() === "r") {
+            startReload();
+        }
     });
 
     document.addEventListener("keyup", e => {
@@ -239,13 +181,120 @@ function setupInput() {
         yaw -= e.movementX * sens;
         pitch -= e.movementY * sens;
 
-        // clamp vertical look (IMPORTANT FIX)
         pitch = Math.max(-1.45, Math.min(1.45, pitch));
     });
+
+    document.addEventListener("mousedown", shoot);
 }
 
 // ==========================
-// MOVEMENT CORE
+// SHOOTING V3
+// ==========================
+
+function shoot() {
+
+    if (gun.reloading) return;
+    if (gun.fireCooldown > 0) return;
+    if (gun.ammo <= 0) return;
+
+    gun.ammo--;
+    gun.fireCooldown = gun.fireRate;
+
+    gun.recoil = 0.04;
+
+    const ray = new THREE.Raycaster();
+    const dir = new THREE.Vector3();
+
+    camera.getWorldDirection(dir);
+    ray.set(camera.position, dir);
+
+    const hits = ray.intersectObjects(enemies);
+
+    if (hits.length > 0) {
+
+        const target = hits[0].object;
+
+        target.health -= 50;
+
+        target.material.color.set(0x000000);
+
+        setTimeout(() => {
+            if (target.health > 0) {
+                target.material.color.set(0xff0000);
+            }
+        }, 100);
+
+        if (target.health <= 0) {
+            scene.remove(target);
+            enemies = enemies.filter(e => e !== target);
+        }
+    }
+
+    updateAmmoUI();
+}
+
+// ==========================
+// RELOAD SYSTEM
+// ==========================
+
+function startReload() {
+
+    if (gun.reloading) return;
+    if (gun.ammo === gun.maxAmmo) return;
+    if (gun.reserveAmmo <= 0) return;
+
+    gun.reloading = true;
+    gun.reloadTimer = gun.reloadTime;
+}
+
+// ==========================
+// UPDATE GUN
+// ==========================
+
+function updateGun() {
+
+    if (gun.fireCooldown > 0) {
+        gun.fireCooldown--;
+    }
+
+    if (gun.reloading) {
+
+        gun.reloadTimer--;
+
+        if (gun.reloadTimer <= 0) {
+
+            const needed = gun.maxAmmo - gun.ammo;
+
+            const taken = Math.min(needed, gun.reserveAmmo);
+
+            gun.ammo += taken;
+            gun.reserveAmmo -= taken;
+
+            gun.reloading = false;
+
+            updateAmmoUI();
+        }
+    }
+
+    gun.recoil *= 0.85;
+}
+
+// ==========================
+// HUD
+// ==========================
+
+function updateAmmoUI() {
+
+    const hud = document.getElementById("ammo");
+
+    if (!hud) return;
+
+    hud.innerText =
+        `Ammo: ${gun.ammo} / ${gun.maxAmmo} | Reserve: ${gun.reserveAmmo}`;
+}
+
+// ==========================
+// MOVEMENT (simple hook version)
 // ==========================
 
 function updateMovement() {
@@ -259,35 +308,27 @@ function updateMovement() {
     forward.y = 0;
     forward.normalize();
 
-    const right = new THREE.Vector3()
-        .crossVectors(forward, camera.up)
-        .normalize();
+    const right = new THREE.Vector3().crossVectors(forward, camera.up);
 
     let move = new THREE.Vector3();
 
-    if(keys["w"]) move.add(forward.clone().multiplyScalar(speed));
-    if(keys["s"]) move.add(forward.clone().multiplyScalar(-speed));
-    if(keys["a"]) move.add(right.clone().multiplyScalar(-speed));
-    if(keys["d"]) move.add(right.clone().multiplyScalar(speed));
+    if (keys["w"]) move.add(forward.clone().multiplyScalar(speed));
+    if (keys["s"]) move.add(forward.clone().multiplyScalar(-speed));
+    if (keys["a"]) move.add(right.clone().multiplyScalar(-speed));
+    if (keys["d"]) move.add(right.clone().multiplyScalar(speed));
 
-    // gravity
     player.velocity.y -= player.gravity;
 
-    // jump
-    if(keys[" "] && player.canJump){
+    if (keys[" "] && player.canJump) {
         player.velocity.y = player.jumpForce;
         player.canJump = false;
     }
 
     move.add(player.velocity);
 
-    const next = player.position.clone().add(move);
+    player.position.add(move);
 
-    if(!checkCollision(next)){
-        player.position.copy(next);
-    }
-
-    if(player.position.y < 2){
+    if (player.position.y < 2) {
         player.position.y = 2;
         player.velocity.y = 0;
         player.canJump = true;
@@ -295,30 +336,7 @@ function updateMovement() {
 }
 
 // ==========================
-// COLLISION
-// ==========================
-
-function checkCollision(pos){
-
-    const box = new THREE.Box3().setFromCenterAndSize(
-        pos,
-        new THREE.Vector3(1,3,1)
-    );
-
-    for(let obj of colliders){
-
-        const b = new THREE.Box3().setFromObject(obj);
-
-        if(box.intersectsBox(b)){
-            return true;
-        }
-    }
-
-    return false;
-}
-
-// ==========================
-// CAMERA (CLEAN FPS FIX)
+// CAMERA
 // ==========================
 
 function updateCamera() {
@@ -326,7 +344,7 @@ function updateCamera() {
     camera.position.copy(player.position);
 
     camera.rotation.y = yaw;
-    camera.rotation.x = pitch;
+    camera.rotation.x = pitch - gun.recoil;
 }
 
 // ==========================
@@ -337,6 +355,7 @@ function animate() {
 
     requestAnimationFrame(animate);
 
+    updateGun();
     updateMovement();
     updateCamera();
 
@@ -349,7 +368,7 @@ function animate() {
 
 window.addEventListener("resize", () => {
 
-    if(!camera) return;
+    if (!camera) return;
 
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
