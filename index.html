@@ -1,1 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Red Creek</title>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: Arial; }
 
+    #menu {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: white;
+    }
+
+    #startBtn {
+      padding: 15px 30px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MENU -->
+  <div id="menu">
+    <h1>RED CREEK</h1>
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud">FPS MODE</div>
+
+  <!-- THREE.JS (IMPORTANT) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+  <!-- YOUR GAME SCRIPT -->
+  <script src="script.js"></script>
+
+</body>
+</html>
