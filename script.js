@@ -1,11 +1,11 @@
 // =========================
-// RED CREEK FPS CORE V1.1
+// RED CREEK - WORLD SYSTEM V1 (FULL BUILD)
 // =========================
 
 let scene, camera, renderer;
 
 const player = {
-  position: new THREE.Vector3(0, 2, 10),
+  position: new THREE.Vector3(0, 2, 20),
   velocity: new THREE.Vector3(),
   speed: 0.12,
   sprint: 0.2,
@@ -36,76 +36,9 @@ function startGame(){
 }
 
 // =========================
-// INIT WORLD
+// INIT
 // =========================
 function init(){
-  // =========================
-// WORLD SYSTEM V1 - RED CREEK
-// =========================
-
-function buildBuilding(x, z, w, h, d, color=0x555555){
-
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(w, h, d),
-    new THREE.MeshStandardMaterial({ color })
-  );
-
-  mesh.position.set(x, h/2, z);
-  scene.add(mesh);
-
-  colliders.push(mesh);
-
-  return mesh;
-}
-
-function buildRedCreek(){
-
-  // ======================
-  // SAFE ZONE (Spawn)
-  // ======================
-  buildBuilding(0, 60, 20, 10, 20, 0x444444); // checkpoint tower
-  buildBuilding(-20, 60, 6, 6, 6, 0x666666);
-  buildBuilding(20, 60, 6, 6, 6, 0x666666);
-
-  // ======================
-  // MAIN STREET
-  // ======================
-  buildBuilding(-30, 0, 12, 10, 12, 0x5a5a5a); // shop
-  buildBuilding(30, 0, 12, 12, 12, 0x4f4f4f);  // shop
-
-  buildBuilding(0, -20, 14, 10, 14, 0x4a4a4a); // central building
-
-  // ======================
-  // RESIDENTIAL AREA
-  // ======================
-  for(let i = 0; i < 6; i++){
-    buildBuilding(
-      -50 + i * 20,
-      -80,
-      10,
-      8,
-      10,
-      0x666666
-    );
-  }
-
-  // ======================
-  // INDUSTRIAL EDGE
-  // ======================
-  buildBuilding(-60, -120, 20, 15, 20, 0x3f3f3f);
-  buildBuilding(60, -120, 20, 15, 20, 0x3f3f3f);
-
-  // ======================
-  // ROAD (VISUAL ONLY)
-  // ======================
-  const road = new THREE.Mesh(
-    new THREE.PlaneGeometry(30, 300),
-    new THREE.MeshStandardMaterial({ color: 0x2b2b2b })
-  );
-  road.rotation.x = -Math.PI / 2;
-  road.position.y = 0.01;
-  scene.add(road);
-}
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x87b5ff);
@@ -131,52 +64,79 @@ function buildRedCreek(){
 
   // GROUND
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(500, 500),
+    new THREE.PlaneGeometry(600, 600),
     new THREE.MeshStandardMaterial({ color: 0x2f8a3a })
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // WORLD BORDERS
-  makeWall(0, 0, -250, 500, 10);
-  makeWall(0, 0, 250, 500, 10);
-  makeWall(-250, 0, 0, 10, 500);
-  makeWall(250, 0, 0, 10, 500);
+  // WORLD
+  buildRedCreek();
 
-  player.position.set(0, 2, 10);
+  player.position.set(0, 2, 20);
 }
 
 // =========================
-// COLLISION WALLS
+// WORLD (RED CREEK)
 // =========================
-function makeWall(x, y, z, w, d){
+function box(x,y,z,w,h,d,color=0x555555){
 
-  const wall = new THREE.Mesh(
-    new THREE.BoxGeometry(w, 50, d),
-    new THREE.MeshBasicMaterial({ visible: false })
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshStandardMaterial({ color })
   );
 
-  wall.position.set(x, 25, z);
-  scene.add(wall);
-  colliders.push(wall);
+  m.position.set(x,y+h/2,z);
+  scene.add(m);
+  colliders.push(m);
+
+  return m;
+}
+
+function buildRedCreek(){
+
+  // SPAWN / CHECKPOINT
+  box(0,0,60,20,10,20,0x444444);
+
+  // MAIN STREET BUILDINGS
+  box(-30,0,0,12,10,12,0x5a5a5a);
+  box(30,0,0,12,12,12,0x4f4f4f);
+  box(0,0,-25,14,10,14,0x4a4a4a);
+
+  // RESIDENTIAL AREA
+  for(let i=0;i<6;i++){
+    box(-50+i*20,0,-90,10,8,10,0x666666);
+  }
+
+  // INDUSTRIAL AREA
+  box(-70,0,-140,25,15,25,0x3d3d3d);
+  box(70,0,-140,25,15,25,0x3d3d3d);
+
+  // ROAD (visual only)
+  const road = new THREE.Mesh(
+    new THREE.PlaneGeometry(40, 300),
+    new THREE.MeshStandardMaterial({ color: 0x2b2b2b })
+  );
+  road.rotation.x = -Math.PI / 2;
+  road.position.y = 0.01;
+  scene.add(road);
 }
 
 // =========================
 // INPUT
 // =========================
-document.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", e=>{
   keys[e.key.toLowerCase()] = true;
 });
 
-document.addEventListener("keyup", (e) => {
+document.addEventListener("keyup", e=>{
   keys[e.key.toLowerCase()] = false;
 });
 
-document.addEventListener("mousemove", (e) => {
-  if (document.pointerLockElement !== document.body) return;
+document.addEventListener("mousemove", e=>{
+  if(document.pointerLockElement !== document.body) return;
 
   const sens = 0.002;
-
   yaw -= e.movementX * sens;
   pitch -= e.movementY * sens;
 
@@ -184,17 +144,17 @@ document.addEventListener("mousemove", (e) => {
 });
 
 // =========================
-// COLLISION BOX
+// COLLISION
 // =========================
 function getBox(pos){
   return new THREE.Box3().setFromCenterAndSize(
     pos,
-    new THREE.Vector3(1, 3, 1)
+    new THREE.Vector3(1,3,1)
   );
 }
 
 // =========================
-// GAME LOOP
+// LOOP
 // =========================
 function animate(){
 
@@ -211,52 +171,48 @@ function animate(){
 
   let move = new THREE.Vector3();
 
-  if (keys["w"]) move.add(forward.clone().multiplyScalar(speed));
-  if (keys["s"]) move.add(forward.clone().multiplyScalar(-speed));
-  if (keys["a"]) move.add(right.clone().multiplyScalar(-speed));
-  if (keys["d"]) move.add(right.clone().multiplyScalar(speed));
+  if(keys["w"]) move.add(forward.clone().multiplyScalar(speed));
+  if(keys["s"]) move.add(forward.clone().multiplyScalar(-speed));
+  if(keys["a"]) move.add(right.clone().multiplyScalar(-speed));
+  if(keys["d"]) move.add(right.clone().multiplyScalar(speed));
 
-  // gravity
   player.velocity.y -= 0.02;
 
-  // jump
-  if (keys[" "] && player.canJump){
+  if(keys[" "] && player.canJump){
     player.velocity.y = 0.35;
     player.canJump = false;
   }
 
   move.add(player.velocity);
 
-  const nextPos = player.position.clone().add(move);
-  const pBox = getBox(nextPos);
+  const next = player.position.clone().add(move);
+  const boxP = getBox(next);
 
   let blocked = false;
 
-  for (let c of colliders){
+  for(let c of colliders){
     const b = new THREE.Box3().setFromObject(c);
-    if (pBox.intersectsBox(b)){
+    if(boxP.intersectsBox(b)){
       blocked = true;
       break;
     }
   }
 
-  if (!blocked){
-    player.position.copy(nextPos);
+  if(!blocked){
+    player.position.copy(next);
   }
 
-  // ground
-  if (player.position.y < 2){
+  if(player.position.y < 2){
     player.position.y = 2;
     player.velocity.y = 0;
     player.canJump = true;
   }
 
-  // camera
   camera.position.copy(player.position);
 
   camera.rotation.order = "YXZ";
   camera.rotation.y = yaw;
   camera.rotation.x = pitch;
 
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
