@@ -1,5 +1,5 @@
 // =========================
-// RED CREEK - WORLD SYSTEM V1 (FULL BUILD)
+// RED CREEK - COMBAT SYSTEM V1
 // =========================
 
 let scene, camera, renderer;
@@ -17,6 +17,7 @@ let pitch = 0;
 
 const keys = {};
 let colliders = [];
+let enemies = [];
 
 // =========================
 // START GAME
@@ -36,7 +37,7 @@ function startGame(){
 }
 
 // =========================
-// INIT
+// INIT WORLD
 // =========================
 function init(){
 
@@ -70,14 +71,14 @@ function init(){
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // WORLD
-  buildRedCreek();
+  buildWorld();
+  spawnEnemies();
 
   player.position.set(0, 2, 20);
 }
 
 // =========================
-// WORLD (RED CREEK)
+// WORLD
 // =========================
 function box(x,y,z,w,h,d,color=0x555555){
 
@@ -88,38 +89,88 @@ function box(x,y,z,w,h,d,color=0x555555){
 
   m.position.set(x,y+h/2,z);
   scene.add(m);
+
   colliders.push(m);
 
   return m;
 }
 
-function buildRedCreek(){
+function buildWorld(){
 
-  // SPAWN / CHECKPOINT
-  box(0,0,60,20,10,20,0x444444);
-
-  // MAIN STREET BUILDINGS
+  box(0,0,60,20,10,20,0x444444); // spawn
   box(-30,0,0,12,10,12,0x5a5a5a);
   box(30,0,0,12,12,12,0x4f4f4f);
   box(0,0,-25,14,10,14,0x4a4a4a);
 
-  // RESIDENTIAL AREA
   for(let i=0;i<6;i++){
     box(-50+i*20,0,-90,10,8,10,0x666666);
   }
 
-  // INDUSTRIAL AREA
   box(-70,0,-140,25,15,25,0x3d3d3d);
   box(70,0,-140,25,15,25,0x3d3d3d);
+}
 
-  // ROAD (visual only)
-  const road = new THREE.Mesh(
-    new THREE.PlaneGeometry(40, 300),
-    new THREE.MeshStandardMaterial({ color: 0x2b2b2b })
-  );
-  road.rotation.x = -Math.PI / 2;
-  road.position.y = 0.01;
-  scene.add(road);
+// =========================
+// ENEMIES
+// =========================
+function spawnEnemies(){
+
+  for(let i=0;i<5;i++){
+
+    const enemy = new THREE.Mesh(
+      new THREE.BoxGeometry(2,4,2),
+      new THREE.MeshStandardMaterial({ color: 0xff0000 })
+    );
+
+    enemy.position.set(
+      (Math.random()-0.5)*100,
+      2,
+      -Math.random()*120
+    );
+
+    enemy.health = 100;
+
+    scene.add(enemy);
+    enemies.push(enemy);
+  }
+}
+
+// =========================
+// SHOOTING
+// =========================
+document.addEventListener("mousedown", shoot);
+
+function shoot(){
+
+  const ray = new THREE.Raycaster();
+
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+
+  ray.set(camera.position, dir);
+
+  const hits = ray.intersectObjects(enemies);
+
+  if(hits.length > 0){
+
+    const target = hits[0].object;
+
+    target.health -= 50;
+
+    // simple hit feedback
+    target.material.color.set(0x000000);
+
+    setTimeout(()=>{
+      if(target.health > 0){
+        target.material.color.set(0xff0000);
+      }
+    }, 100);
+
+    if(target.health <= 0){
+      scene.remove(target);
+      enemies = enemies.filter(e => e !== target);
+    }
+  }
 }
 
 // =========================
@@ -137,6 +188,7 @@ document.addEventListener("mousemove", e=>{
   if(document.pointerLockElement !== document.body) return;
 
   const sens = 0.002;
+
   yaw -= e.movementX * sens;
   pitch -= e.movementY * sens;
 
@@ -214,5 +266,5 @@ function animate(){
   camera.rotation.y = yaw;
   camera.rotation.x = pitch;
 
-  renderer.render(scene,camera);
+  renderer.render(scene, camera);
 }
