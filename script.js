@@ -39,6 +39,73 @@ function startGame(){
 // INIT WORLD
 // =========================
 function init(){
+  // =========================
+// WORLD SYSTEM V1 - RED CREEK
+// =========================
+
+function buildBuilding(x, z, w, h, d, color=0x555555){
+
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(w, h, d),
+    new THREE.MeshStandardMaterial({ color })
+  );
+
+  mesh.position.set(x, h/2, z);
+  scene.add(mesh);
+
+  colliders.push(mesh);
+
+  return mesh;
+}
+
+function buildRedCreek(){
+
+  // ======================
+  // SAFE ZONE (Spawn)
+  // ======================
+  buildBuilding(0, 60, 20, 10, 20, 0x444444); // checkpoint tower
+  buildBuilding(-20, 60, 6, 6, 6, 0x666666);
+  buildBuilding(20, 60, 6, 6, 6, 0x666666);
+
+  // ======================
+  // MAIN STREET
+  // ======================
+  buildBuilding(-30, 0, 12, 10, 12, 0x5a5a5a); // shop
+  buildBuilding(30, 0, 12, 12, 12, 0x4f4f4f);  // shop
+
+  buildBuilding(0, -20, 14, 10, 14, 0x4a4a4a); // central building
+
+  // ======================
+  // RESIDENTIAL AREA
+  // ======================
+  for(let i = 0; i < 6; i++){
+    buildBuilding(
+      -50 + i * 20,
+      -80,
+      10,
+      8,
+      10,
+      0x666666
+    );
+  }
+
+  // ======================
+  // INDUSTRIAL EDGE
+  // ======================
+  buildBuilding(-60, -120, 20, 15, 20, 0x3f3f3f);
+  buildBuilding(60, -120, 20, 15, 20, 0x3f3f3f);
+
+  // ======================
+  // ROAD (VISUAL ONLY)
+  // ======================
+  const road = new THREE.Mesh(
+    new THREE.PlaneGeometry(30, 300),
+    new THREE.MeshStandardMaterial({ color: 0x2b2b2b })
+  );
+  road.rotation.x = -Math.PI / 2;
+  road.position.y = 0.01;
+  scene.add(road);
+}
 
   scene = new THREE.Scene();
   scene.background = new THREE.Color(0x87b5ff);
@@ -69,18 +136,6 @@ function init(){
   );
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
-
-  // GRID (movement visibility)
-  const grid = new THREE.GridHelper(500, 50);
-  scene.add(grid);
-
-  // CENTER TEST OBJECT
-  const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(5,5,5),
-    new THREE.MeshStandardMaterial({ color: 0xff0000 })
-  );
-  cube.position.set(0,2.5,0);
-  scene.add(cube);
 
   // WORLD BORDERS
   makeWall(0, 0, -250, 500, 10);
