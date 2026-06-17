@@ -1,11 +1,11 @@
 // =========================
-// RED CREEK - CORE FPS V1
+// RED CREEK FPS CORE V1.1
 // =========================
 
 let scene, camera, renderer;
 
 const player = {
-  position: new THREE.Vector3(0, 2, 5),
+  position: new THREE.Vector3(0, 2, 10),
   velocity: new THREE.Vector3(),
   speed: 0.12,
   sprint: 0.2,
@@ -19,9 +19,11 @@ const keys = {};
 let colliders = [];
 
 // =========================
-// START BUTTON
+// START GAME
 // =========================
-document.getElementById("startBtn").addEventListener("click", startGame);
+window.addEventListener("load", () => {
+  document.getElementById("startBtn").addEventListener("click", startGame);
+});
 
 function startGame(){
   document.getElementById("menu").style.display = "none";
@@ -34,13 +36,13 @@ function startGame(){
 }
 
 // =========================
-// INIT
+// INIT WORLD
 // =========================
 function init(){
 
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xa9c9ff);
-  scene.fog = new THREE.FogExp2(0xa9c9ff, 0.015);
+  scene.background = new THREE.Color(0x87b5ff);
+  scene.fog = new THREE.FogExp2(0x87b5ff, 0.015);
 
   camera = new THREE.PerspectiveCamera(
     75,
@@ -53,7 +55,7 @@ function init(){
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
-  // LIGHTS
+  // LIGHTING
   scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
   const sun = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -68,17 +70,29 @@ function init(){
   ground.rotation.x = -Math.PI / 2;
   scene.add(ground);
 
-  // BORDER COLLISION
+  // GRID (movement visibility)
+  const grid = new THREE.GridHelper(500, 50);
+  scene.add(grid);
+
+  // CENTER TEST OBJECT
+  const cube = new THREE.Mesh(
+    new THREE.BoxGeometry(5,5,5),
+    new THREE.MeshStandardMaterial({ color: 0xff0000 })
+  );
+  cube.position.set(0,2.5,0);
+  scene.add(cube);
+
+  // WORLD BORDERS
   makeWall(0, 0, -250, 500, 10);
   makeWall(0, 0, 250, 500, 10);
   makeWall(-250, 0, 0, 10, 500);
   makeWall(250, 0, 0, 10, 500);
 
-  player.position.set(0, 2, 5);
+  player.position.set(0, 2, 10);
 }
 
 // =========================
-// COLLISION WALL
+// COLLISION WALLS
 // =========================
 function makeWall(x, y, z, w, d){
 
@@ -175,7 +189,7 @@ function animate(){
     player.position.copy(nextPos);
   }
 
-  // ground check
+  // ground
   if (player.position.y < 2){
     player.position.y = 2;
     player.velocity.y = 0;
