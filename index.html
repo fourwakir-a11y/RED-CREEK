@@ -1,66 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Red Creek</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Creek</title>
 
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: Arial;
-    }
+    <link rel="stylesheet" href="style.css">
 
-    #menu {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      color: white;
-      z-index: 10;
-    }
-
-    #startBtn {
-      padding: 15px 30px;
-      font-size: 20px;
-      cursor: pointer;
-    }
-
-    #hud {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: white;
-      display: none;
-      z-index: 5;
-    }
-
-    canvas {
-      display: block;
-    }
-  </style>
+    <!-- Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 </head>
-
 <body>
 
-  <!-- MENU -->
-  <div id="menu">
-    <h1>RED CREEK</h1>
-    <button id="startBtn">Start Game</button>
-  </div>
+    <!-- MAIN MENU -->
+    <div id="menu">
+        <h1>RED CREEK</h1>
+        <p>Open World FPS RPG</p>
 
-  <!-- HUD -->
-  <div id="hud">FPS MODE</div>
+        <button id="startBtn">
+            Start Game
+        </button>
+    </div>
 
-  <!-- THREE.JS -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <!-- HUD -->
+    <div id="hud">
 
-  <!-- GAME SCRIPT -->
-  <script src="script.js"></script>
+        <div id="crosshair">
+            +
+        </div>
+
+        <div id="ammo">
+            Ammo: 30 / 30
+        </div>
+
+        <div id="objective">
+            Explore Red Creek
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
 
 </body>
 </html>
